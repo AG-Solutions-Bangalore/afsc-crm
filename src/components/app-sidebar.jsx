@@ -49,18 +49,18 @@ const NAVIGATION_CONFIG = {
       icon: Gauge,
     },
 
-    REPORT: {
-      title: "Report",
-      url: "#2",
-      icon: BarChart3,
-      items: [
-        {
-          title: "Product",
-          url: "/report/product",
-          icon: User,
-        },
-      ],
-    },
+    // REPORT: {
+    //   title: "Report",
+    //   url: "#2",
+    //   icon: BarChart3,
+    //   items: [
+    //     {
+    //       title: "Product",
+    //       url: "/report/product",
+    //       icon: User,
+    //     },
+    //   ],
+    // },
     SETTINGS: {
       title: "Settings",
       url: "/settings",
@@ -71,22 +71,22 @@ const NAVIGATION_CONFIG = {
 
 const USER_ROLE_PERMISSIONS = {
   1: {
-    navMain: ["DASHBOARD", "CLIENT", "BRAND", "PRODUCT", "REPORT", "SETTINGS"],
+    navMain: ["DASHBOARD", "CLIENT", "BRAND", "PRODUCT", "SETTINGS"],
 
     navMainReport: ["DASHBOARD", "SETTINGS"],
   },
   2: {
-    navMain: ["DASHBOARD", "CLIENT", "BRAND", "PRODUCT", "REPORT", "SETTINGS"],
+    navMain: ["DASHBOARD", "CLIENT", "BRAND", "PRODUCT", "SETTINGS"],
 
     navMainReport: ["DASHBOARD", "SETTINGS"],
   },
   3: {
-    navMain: ["DASHBOARD", "CLIENT", "BRAND", "PRODUCT", "REPORT", "SETTINGS"],
+    navMain: ["DASHBOARD", "CLIENT", "BRAND", "PRODUCT", "SETTINGS"],
 
     navMainReport: ["DASHBOARD", "SETTINGS"],
   },
   4: {
-    navMain: ["DASHBOARD", "CLIENT", "BRAND", "PRODUCT", "REPORT", "SETTINGS"],
+    navMain: ["DASHBOARD", "CLIENT", "BRAND", "PRODUCT", "SETTINGS"],
 
     navMainReport: ["DASHBOARD", "SETTINGS"],
   },
