@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "@/api/apiClient";
 import toast from "react-hot-toast";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import {
   Select,
   SelectContent,
@@ -14,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import {
   Dialog,
   DialogContent,
@@ -22,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 import {
   Edit2,
   Plus,
@@ -32,9 +28,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
-import LoadingBars from "@/components/loader/loading-bar";
-
+import LoadingBars from "@/components/Loaders/LoadingBar";
 /* -------------------------------------------------
    Reusable form helpers – defined outside the component
    ------------------------------------------------- */
@@ -62,7 +56,6 @@ export const InputField = ({
     />
   </div>
 );
-
 export const SelectField = ({
   label,
   name,
@@ -93,7 +86,6 @@ export const SelectField = ({
     </select>
   </div>
 );
-
 /* -------------------------------------------------
    Main Product component – styled like Client page
    ------------------------------------------------- */
@@ -107,16 +99,13 @@ const Product = () => {
   });
   const [imageBase, setImageBase] = useState("");
   const [noImageUrl, setNoImageUrl] = useState("");
-
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [loading, setLoading] = useState(false);
-
   // Image handling (mirrors Client component)
   const [productImage, setProductImage] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
-
   const initialForm = {
     product_name: "",
     product_brand: "",
@@ -134,6 +123,16 @@ const Product = () => {
     product_image: null,
   };
   const [form, setForm] = useState(initialForm);
+  const [brands, setBrands] = useState([]);
+  const fetchActiveBrands = async () => {
+    try {
+      const res = await apiClient.get("/activeBrands"); // adjust endpoint if needed
+      setBrands(res.data?.data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load brands");
+    }
+  };
 
   /* -------------------- FETCH -------------------- */
   const fetchProducts = async (page = 1, term = "") => {
@@ -141,13 +140,11 @@ const Product = () => {
     try {
       const res = await apiClient.get(`/product?page=${page}&search=${term}`);
       const data = res.data?.data;
-
       setProducts(data?.data || []);
       setPagination({
         current_page: data?.current_page || 1,
         last_page: data?.last_page || 1,
       });
-
       // Image base URLs (product & fallback)
       if (res.data?.image_url) {
         const prodUrl = res.data.image_url.find(
@@ -166,17 +163,15 @@ const Product = () => {
       setPageLoading(false);
     }
   };
-
   useEffect(() => {
     fetchProducts(1, "");
+    fetchActiveBrands();
   }, []);
-
   // ---------- Search (debounce) ----------
   useEffect(() => {
     const timer = setTimeout(() => fetchProducts(1, searchTerm), 300);
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
   // ---------- Pagination ----------
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.last_page) {
@@ -184,13 +179,11 @@ const Product = () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
-
   // ---------- Form helpers ----------
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -200,7 +193,6 @@ const Product = () => {
       reader.readAsDataURL(file);
     }
   };
-
   const buildFormData = (data) => {
     const fd = new FormData();
     Object.entries(data).forEach(([k, v]) => {
@@ -212,7 +204,6 @@ const Product = () => {
     });
     return fd;
   };
-
   // ---------- Create ----------
   const createProduct = async () => {
     if (!form.product_name.trim()) {
@@ -222,8 +213,9 @@ const Product = () => {
     setLoading(true);
     try {
       const fd = buildFormData(form);
-      await apiClient.post("/product", fd);
-      toast.success("Product created");
+      await apiClient.post("/product", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       setIsModalOpen(false);
       fetchProducts(pagination.current_page, searchTerm);
     } catch (err) {
@@ -233,7 +225,7 @@ const Product = () => {
       setLoading(false);
     }
   };
-
+  // ---------- Update ----------
   // ---------- Update ----------
   const updateProduct = async () => {
     if (!editingProduct) return;
@@ -241,7 +233,10 @@ const Product = () => {
     try {
       const fd = buildFormData(form);
       fd.append("_method", "PUT");
-      await apiClient.post(`/product/${editingProduct.id}`, fd);
+      // <-- multipart/form‑data header added
+      await apiClient.post(`/product/${editingProduct.id}`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       toast.success("Product updated");
       setIsModalOpen(false);
       fetchProducts(pagination.current_page, searchTerm);
@@ -252,7 +247,6 @@ const Product = () => {
       setLoading(false);
     }
   };
-
   // ---------- Open / Close modal ----------
   const openCreateModal = () => {
     setEditingProduct(null);
@@ -261,7 +255,6 @@ const Product = () => {
     setLogoPreview(null);
     setIsModalOpen(true);
   };
-
   const openEditModal = (product) => {
     setEditingProduct(product);
     setForm({
@@ -280,6 +273,7 @@ const Product = () => {
       product_status: String(product.product_status ?? "1"),
       product_image: null,
     });
+    // Set preview if image exists
     if (product.product_image) {
       setLogoPreview(`${imageBase}${product.product_image}`);
     } else {
@@ -288,7 +282,6 @@ const Product = () => {
     setProductImage(null);
     setIsModalOpen(true);
   };
-
   const closeModal = () => {
     if (!loading) {
       setForm(initialForm);
@@ -298,7 +291,6 @@ const Product = () => {
       setIsModalOpen(false);
     }
   };
-
   // ---------- Toggle status ----------
   const toggleStatus = async (product) => {
     const newStatus = String(product.product_status) === "1" ? "0" : "1";
@@ -315,7 +307,6 @@ const Product = () => {
       toast.error("Failed to update status");
     }
   };
-
   /* -------------------- UI -------------------- */
   return (
     <div className="p-6 space-y-6">
@@ -326,7 +317,7 @@ const Product = () => {
           <p className="text-muted-foreground mt-1">Manage all your products</p>
         </div>
         {/* Search bar */}
-        <div className="flex w-full lg:w-auto items-center gap-2 ml-20">
+        <div className="flex w-full lg:w-full items-center gap-2  ml-20">
           <Input
             placeholder="Search products ..."
             value={searchTerm}
@@ -351,10 +342,9 @@ const Product = () => {
           Create Product
         </Button>
       </div>
-
       {/* Modal */}
       <Dialog open={isModalOpen} onOpenChange={closeModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar">
           <DialogHeader>
             <DialogTitle className="text-2xl">
               {editingProduct ? "Update Product" : "Create New Product"}
@@ -365,7 +355,6 @@ const Product = () => {
                 : "Fill in the details to create a new product"}
             </DialogDescription>
           </DialogHeader>
-
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -381,76 +370,99 @@ const Product = () => {
               value={form.product_name}
               onChange={handleChange}
             />
-            <InputField
-              label="Brand"
-              name="product_brand"
-              value={form.product_brand}
-              onChange={handleChange}
-            />
-            <InputField
-              label="Price"
-              name="product_price"
-              type="number"
-              value={form.product_price}
-              onChange={handleChange}
-            />
-            <InputField
-              label="Size"
-              name="product_size"
-              value={form.product_size}
-              onChange={handleChange}
-            />
-            <SelectField
-              label="Product Type"
-              name="product_type"
-              value={form.product_type}
-              options={["Dairy", "Dry", "Frozen"]}
-              onChange={handleChange}
-            />
-            <SelectField
-              label="Veg / Non Veg"
-              name="product_veg"
-              value={form.product_veg}
-              options={["Veg", "Non Veg"]}
-              onChange={handleChange}
-            />
-            <InputField
-              label="Quantity"
-              name="product_quantity"
-              value={form.product_quantity}
-              onChange={handleChange}
-            />
-            <InputField
-              label="Category"
-              name="product_category"
-              value={form.product_category}
-              onChange={handleChange}
-            />
-            <InputField
-              label="Sub Category"
-              name="product_sub_category"
-              value={form.product_sub_category}
-              onChange={handleChange}
-            />
+
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-2">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Brand <span className="text-red-500">*</span>
+                </Label>
+
+                <select
+                  name="product_brand"
+                  value={form.product_brand}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="">Select Brand</option>
+
+                  {brands.map((b) => (
+                    <option key={b.id} value={b.brand_name}>
+                      {b.brand_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <InputField
+                label="Price"
+                name="product_price"
+                type="number"
+                value={form.product_price}
+                onChange={handleChange}
+              />
+              <InputField
+                label="Size"
+                name="product_size"
+                value={form.product_size}
+                onChange={handleChange}
+              />{" "}
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-2">
+              <SelectField
+                label="Product Type"
+                name="product_type"
+                value={form.product_type}
+                options={["Dairy", "Dry", "Frozen"]}
+                onChange={handleChange}
+              />
+              <SelectField
+                label="Veg / Non Veg"
+                name="product_veg"
+                value={form.product_veg}
+                options={["Veg", "Non Veg"]}
+                onChange={handleChange}
+              />
+              <InputField
+                label="Quantity"
+                name="product_quantity"
+                value={form.product_quantity}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
+              <InputField
+                label="Category"
+                name="product_category"
+                value={form.product_category}
+                onChange={handleChange}
+              />
+              <InputField
+                label="Sub Category"
+                name="product_sub_category"
+                value={form.product_sub_category}
+                onChange={handleChange}
+              />
+            </div>
             <InputField
               label="Specification"
               name="product_specification"
               value={form.product_specification}
               onChange={handleChange}
             />
-            <InputField
-              label="Self Life"
-              name="product_self_life"
-              value={form.product_self_life}
-              onChange={handleChange}
-            />
-            <InputField
-              label="Country"
-              name="product_country"
-              value={form.product_country}
-              onChange={handleChange}
-            />
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-2">
+              <InputField
+                label="Self Life"
+                name="product_self_life"
+                value={form.product_self_life}
+                onChange={handleChange}
+              />
 
+              <InputField
+                label="Country"
+                name="product_country"
+                value={form.product_country}
+                onChange={handleChange}
+              />
+            </div>
             {/* Image upload – preview similar to Client */}
             <div className="space-y-2">
               <Label htmlFor="product_image" className="text-sm font-medium">
@@ -504,39 +516,39 @@ const Product = () => {
                 )}
               </div>
             </div>
-
             {/* Status */}
-            <div className="space-y-2">
-              <Label htmlFor="product_status" className="text-sm font-medium">
-                Status
-              </Label>
-              <Select
-                value={form.product_status}
-                onValueChange={(v) =>
-                  setForm((prev) => ({ ...prev, product_status: v }))
-                }
-                disabled={loading}
-              >
-                <SelectTrigger id="product_status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      Active
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="0">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-600" />
-                      Inactive
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
+            {editingProduct && (
+              <div className="space-y-2">
+                <Label htmlFor="product_status" className="text-sm font-medium">
+                  Status
+                </Label>
+                <Select
+                  value={form.product_status}
+                  onValueChange={(v) =>
+                    setForm((prev) => ({ ...prev, product_status: v }))
+                  }
+                  disabled={loading}
+                >
+                  <SelectTrigger id="product_status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        Active
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="0">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-600" />
+                        Inactive
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {/* Buttons */}
             <div className="flex gap-2 justify-end pt-4">
               <Button
@@ -547,7 +559,11 @@ const Product = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button
+                type="submit"
+                className="bg-green-600 hover:cursor-pointer text-white"
+                disabled={loading}
+              >
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {editingProduct ? "Update" : "Create"}
               </Button>
@@ -555,12 +571,11 @@ const Product = () => {
           </form>
         </DialogContent>
       </Dialog>
-
       {/* Products Grid */}
       {pageLoading ? (
         <LoadingBars />
       ) : products.length === 0 ? (
-        <Card className="border border-dashed">
+        <Card className="border border-dashed group-hover:scale-105">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground mb-4">
               No products created yet
@@ -589,22 +604,23 @@ const Product = () => {
               >
                 <Edit2 className="w-4 h-4" />
               </Button>
-
               <CardContent className="p-0">
                 {/* Image */}
                 <div className="w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center border-b border-gray-200 overflow-hidden">
+                  {/* LEFT SIDE - Product Type */}
+                  <div className="absolute left-2 top-2">
+                    <span className="absolute left-2 top-2 text-xs font-semibold px-2 py-1 rounded-full text-white bg-green-600 shadow-lg  hover:scale-110 transition-transform duration-300">
+                      {product.product_type || "N/A"}
+                    </span>
+                  </div>
                   {product.product_image ? (
                     <img
-                      src={`${imageBase}${
-                        typeof product.product_image === "object"
-                          ? product.product_image.url || ""
-                          : product.product_image
-                      }`}
+                      src={`${imageBase}${typeof product.product_image === "object" ? product.product_image.url || "" : product.product_image}`}
                       alt={product.product_name}
                       onError={(e) => {
                         e.target.src = noImageUrl;
                       }}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-contain  transition-transform duration-300"
                     />
                   ) : (
                     <img
@@ -614,39 +630,39 @@ const Product = () => {
                     />
                   )}
                 </div>
-
                 {/* Details */}
                 <div className="p-4 space-y-2">
-                  <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
-                    {product.product_name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {product.product_brand}
-                  </p>
-                  <p className="mt-1 text-primary font-medium">
-                    ₹ {product.product_price}
-                  </p>
-
-                  {/* Status badge – click toggles */}
-                  <div
-                    className="mt-2 flex items-center gap-1 cursor-pointer"
-                    onClick={() => toggleStatus(product)}
-                  >
-                    {String(product.product_status) === "1" ? (
-                      <>
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-xs font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">
-                          Active
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-2 h-2 bg-red-500 rounded-full" />
-                        <span className="text-xs font-medium text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full">
-                          Inactive
-                        </span>
-                      </>
-                    )}
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                      {product.product_name}
+                    </h3>
+                    <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
+                      {product.product_veg}
+                    </h3>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      {product.product_brand}
+                    </p>
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        {product.product_status === "1" ? (
+                          <div className="flex items-center gap-0.5 whitespace-nowrap">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                            <span className="text-xs font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">
+                              Active
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-0.5 whitespace-nowrap">
+                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                            <span className="text-xs font-medium text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full">
+                              Inactive
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -654,7 +670,6 @@ const Product = () => {
           ))}
         </div>
       )}
-
       {/* Pagination */}
       {pagination.last_page > 1 && (
         <div className="flex items-center justify-center gap-3 mt-8">
@@ -667,7 +682,6 @@ const Product = () => {
             <ChevronLeft className="w-4 h-4" />
             Previous
           </Button>
-
           <div className="flex items-center gap-2">
             {Array.from({ length: pagination.last_page }).map((_, i) => {
               const pageNum = i + 1;
@@ -678,7 +692,6 @@ const Product = () => {
                 i > 0 &&
                 pageNum === pagination.current_page - 2 &&
                 pagination.current_page > 2;
-
               // ellipsis near the end
               if (
                 pageNum > pagination.last_page - 2 &&
@@ -692,7 +705,6 @@ const Product = () => {
                   );
                 }
               }
-
               if (isNear || pageNum === 1 || pageNum === pagination.last_page) {
                 return (
                   <Button
@@ -724,7 +736,6 @@ const Product = () => {
               return null;
             })}
           </div>
-
           <Button
             onClick={() => handlePageChange(pagination.current_page + 1)}
             disabled={
@@ -738,7 +749,6 @@ const Product = () => {
           </Button>
         </div>
       )}
-
       {/* Page info */}
       {pagination.last_page > 1 && (
         <div className="text-center text-sm text-muted-foreground">
@@ -748,5 +758,4 @@ const Product = () => {
     </div>
   );
 };
-
 export default Product;

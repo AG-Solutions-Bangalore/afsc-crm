@@ -301,7 +301,7 @@ const Brand = () => {
                 placeholder="Enter brand name"
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
-                disabled={loading}
+                disabled
                 className="border-gray-200"
               />
             </div>

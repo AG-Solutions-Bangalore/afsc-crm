@@ -217,12 +217,31 @@ const Client = () => {
   // =========================
   // CHANGE STATUS
   // =========================
-  const handleStatusChange = async (client) => {
+  // const handleStatusChange = async (client) => {
+  //   try {
+  //     const formData = new FormData();
+  //     // Ensure we're comparing and setting as strings
+  //     const newStatus = String(client.client_status) === "1" ? "0" : "1";
+  //     formData.append("client_status", newStatus);
+
+  //     await apiClient.patch(`/clients/${client.id}/status`, formData, {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     });
+
+  //     toast.success("Status updated");
+  //     fetchClients(currentPage, searchTerm);
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error("Failed to update status");
+  //   }
+  // };
+  const handleStatusChange = async (client, value) => {
     try {
       const formData = new FormData();
-      // Ensure we're comparing and setting as strings
-      const newStatus = String(client.client_status) === "1" ? "0" : "1";
-      formData.append("client_status", newStatus);
+
+      formData.append("client_status", value);
 
       await apiClient.patch(`/clients/${client.id}/status`, formData, {
         headers: {
@@ -231,13 +250,18 @@ const Client = () => {
       });
 
       toast.success("Status updated");
-      fetchClients(currentPage, searchTerm);
+
+      // Update UI instantly
+      setClients((prev) =>
+        prev.map((c) =>
+          c.id === client.id ? { ...c, client_status: value } : c,
+        ),
+      );
     } catch (error) {
       console.error(error);
       toast.error("Failed to update status");
     }
   };
-
   // =========================
   // SEARCH EFFECT (DEBOUNCE)
   // =========================
@@ -441,7 +465,11 @@ const Client = () => {
           {clients.map((client) => (
             <Card
               key={client.id}
-              className="hover:shadow-lg transition-all border border-gray-200 overflow-hidden group relative"
+              className={`hover:shadow-lg transition-all overflow-hidden group relative ${
+                String(client.client_status) === "0"
+                  ? "bg-gray-100 border-gray-300 opacity-70"
+                  : "bg-white border-gray-200"
+              }`}
             >
               {/* EDIT BUTTON - TOP RIGHT */}
               <Button
@@ -479,21 +507,27 @@ const Client = () => {
                     <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 flex-1">
                       {client.client_name}
                     </h3>
-                    {client.client_status === 1 ? (
-                      <div className="flex items-center gap-0.5 whitespace-nowrap">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                        <span className="text-xs font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">
-                          Active
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-0.5 whitespace-nowrap">
-                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                        <span className="text-xs font-medium text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full">
-                          Inactive
-                        </span>
-                      </div>
-                    )}
+                    <Select
+                      value={String(client.client_status)}
+                      onValueChange={(value) =>
+                        handleStatusChange(client, value)
+                      }
+                    >
+                      <SelectTrigger
+                        className={`h-8 w-28 text-xs border-0 shadow-none ${
+                          String(client.client_status) === "1"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        <SelectItem value="1">Active</SelectItem>
+                        <SelectItem value="0">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>
