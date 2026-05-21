@@ -28,6 +28,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import LoadingBar from "@/components/loader/loading-bar";
+import LoadingBars from "@/components/Loaders/LoadingBar";
 
 const Client = () => {
   const [clients, setClients] = useState([]);
@@ -45,14 +47,17 @@ const Client = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [clientImageUrl, setClientImageUrl] = useState("");
   const [noImageUrl, setNoImageUrl] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // =========================
   // FETCH BRANDS
   // =========================
-  const fetchClients = async (page = 1) => {
+  const fetchClients = async (page = 1, search = "") => {
     try {
       setPageLoading(true);
-      const response = await apiClient.get(`/client?page=${page}`);
+      const response = await apiClient.get(
+        `/client?page=${page}&search=${search}`,
+      );
       const responseData = response.data.data;
 
       setClients(responseData.data);
@@ -71,8 +76,7 @@ const Client = () => {
         if (clientUrl) setClientImageUrl(clientUrl);
         if (noImage) setNoImageUrl(noImage);
       }
-
-      console.log("Clients loaded:", responseData.data);
+      setPageLoading(false);
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch clients");
@@ -82,7 +86,7 @@ const Client = () => {
   };
 
   useEffect(() => {
-    fetchClients(1);
+    fetchClients(1, "");
   }, []);
 
   // =========================
@@ -90,7 +94,7 @@ const Client = () => {
   // =========================
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      fetchClients(newPage);
+      fetchClients(newPage, searchTerm);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -154,7 +158,7 @@ const Client = () => {
 
       resetForm();
       setIsModalOpen(false);
-      fetchClients(currentPage);
+      fetchClients(currentPage, searchTerm);
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong");
@@ -227,20 +231,50 @@ const Client = () => {
       });
 
       toast.success("Status updated");
-      fetchClients(currentPage);
+      fetchClients(currentPage, searchTerm);
     } catch (error) {
       console.error(error);
       toast.error("Failed to update status");
     }
   };
 
+  // =========================
+  // SEARCH EFFECT (DEBOUNCE)
+  // =========================
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchClients(1, searchTerm);
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
   return (
     <div className="p-6 space-y-6">
       {/* HEADER */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
+        <div className="w-1/2">
+          <h1 className="text-3xl font-bold tracking-tight ">Clients</h1>
           <p className="text-muted-foreground mt-1">Manage all your clients</p>
+        </div>
+        {/* SEARCH BAR */}
+        <div className="flex w-full lg:w-full items-center gap-2  ml-20">
+          <Input
+            type="text"
+            placeholder="Search clients ..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 max-w-md border-gray-200"
+          />
+          {searchTerm && (
+            <Button
+              onClick={() => setSearchTerm("")}
+              variant="outline"
+              className="gap-2"
+            >
+              Clear
+            </Button>
+          )}
         </div>
         <Button
           onClick={handleOpenCreateModal}
@@ -383,7 +417,9 @@ const Client = () => {
       </Dialog>
 
       {/* CLIENTS GRID */}
-      {clients.length === 0 ? (
+      {pageLoading ? (
+        <LoadingBars />
+      ) : clients.length === 0 ? (
         <Card className="border border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="text-center">

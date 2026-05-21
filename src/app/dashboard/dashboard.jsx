@@ -62,21 +62,21 @@ function Dashboard() {
 
   const stats = [
     {
-      title: "Brand Count",
+      title: "Brand ",
       count: dashboardData.brand_count || 0,
       icon: Users,
       color: "#3b82f6", // Blue
       link: "/brand",
     },
     {
-      title: "Client Count",
+      title: "Client",
       count: dashboardData.client_count || 0,
       icon: LandPlot,
       color: "#10b981", // Emerald
       link: "/client",
     },
     {
-      title: "Product Count",
+      title: "Product",
       count: dashboardData.product_count || 0,
       icon: Boxes,
       color: "#f59e0b", // Amber

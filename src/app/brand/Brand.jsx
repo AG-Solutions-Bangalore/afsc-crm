@@ -28,6 +28,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import LoadingBars from "@/components/Loaders/LoadingBar";
 
 const Brand = () => {
   const [brands, setBrands] = useState([]);
@@ -76,6 +77,7 @@ const Brand = () => {
 
         if (brandUrl) setBrandImageUrl(brandUrl);
         if (noImage) setNoImageUrl(noImage);
+        setPageLoading(false);
       }
     } catch (error) {
       console.error(error);
@@ -238,117 +240,331 @@ const Brand = () => {
     <div className="p-6 space-y-6">
       {/* HEADER */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Brands</h1>
+        <div className="w-1/2">
+          <h1 className="text-3xl font-bold tracking-tight">Brands</h1>
           <p className="text-muted-foreground mt-1">
             Manage all your product brands
           </p>
         </div>
+        {/* SEARCH BAR */}
+        <div className="flex w-full lg:w-full items-center gap-2 ml-20">
+          <Input
+            type="text"
+            placeholder="Search brands ..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 max-w-md border-gray-200"
+          />
 
-        <Button onClick={handleOpenCreateModal}>
-          <Plus className="w-4 h-4 mr-2" />
+          {search && (
+            <Button
+              onClick={() => setSearch("")}
+              variant="outline"
+              className="gap-2"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+
+        <Button
+          onClick={handleOpenCreateModal}
+          className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white gap-2"
+        >
+          <Plus className="w-4 h-4" />
           Create Brand
-        </Button>
-      </div>
-
-      {/* SEARCH BAR */}
-      <div className="flex gap-3">
-        <Input
-          placeholder="Search brands..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-64"
-        />
-
-        <Button variant="outline" onClick={() => setSearch("")}>
-          Clear
         </Button>
       </div>
 
       {/* MODAL */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              {editingId ? "Update Brand" : "Create Brand"}
+            <DialogTitle className="text-2xl">
+              {editingId ? "Update Brand" : "Create New Brand"}
             </DialogTitle>
+            <DialogDescription>
+              {editingId
+                ? "Update the brand information below"
+                : "Fill in the details to create a new brand"}
+            </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              placeholder="Brand Name"
-              value={brandName}
-              onChange={(e) => setBrandName(e.target.value)}
-            />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* BRAND NAME */}
+            <div className="space-y-2">
+              <Label htmlFor="brandName" className="text-sm font-medium">
+                Brand Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="brandName"
+                placeholder="Enter brand name"
+                value={brandName}
+                onChange={(e) => setBrandName(e.target.value)}
+                disabled={loading}
+                className="border-gray-200"
+              />
+            </div>
 
-            <input type="file" onChange={handleLogoChange} />
+            {/* BRAND LOGO */}
+            <div className="space-y-2">
+              <Label htmlFor="brandLogo" className="text-sm font-medium">
+                Brand Logo
+              </Label>
+              <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-blue-300 transition-colors">
+                <input
+                  id="brandLogo"
+                  type="file"
+                  onChange={handleLogoChange}
+                  disabled={loading}
+                  className="hidden"
+                  accept="image/*"
+                />
+                {logoPreview ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      className="w-24 h-24 object-contain"
+                      onError={(e) => {
+                        e.target.src = noImageUrl || "";
+                      }}
+                    />
+                    <label htmlFor="brandLogo">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          document.getElementById("brandLogo").click()
+                        }
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Change Logo
+                      </button>
+                    </label>
+                  </div>
+                ) : (
+                  <label htmlFor="brandLogo" className="cursor-pointer">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <Plus className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <p className="text-sm font-medium text-gray-700">
+                        Click to upload logo
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG or GIF (Max. 5MB)
+                      </p>
+                    </div>
+                  </label>
+                )}
+              </div>
+            </div>
 
-            <Select value={brandStatus} onValueChange={setBrandStatus}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Active</SelectItem>
-                <SelectItem value="0">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* BRAND STATUS */}
+            <div className="space-y-2">
+              <Label htmlFor="brandStatus" className="text-sm font-medium">
+                Status <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={String(brandStatus)}
+                onValueChange={setBrandStatus}
+              >
+                <SelectTrigger id="brandStatus" disabled={loading}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      Active
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="0">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-600" />
+                      Inactive
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+            {/* SUBMIT BUTTON */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+            >
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {loading
+                ? "Processing..."
+                : editingId
+                  ? "Update Brand"
+                  : "Create Brand"}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* GRID */}
-      <div className="grid grid-cols-4 gap-4">
-        {brands.map((brand) => (
-          <Card key={brand.id}>
-            <CardContent className="p-4">
-              <img
-                src={
-                  brand.brand_logo
-                    ? `${brandImageUrl}${brand.brand_logo}`
-                    : noImageUrl
-                }
-                className="h-24 w-full object-contain"
-              />
-
-              <h3 className="mt-2 font-semibold">{brand.brand_name}</h3>
-
+      {/* BRANDS GRID */}
+      {pageLoading ? (
+        <LoadingBars />
+      ) : brands.length === 0 ? (
+        <Card className="border border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">
+                No brands created yet
+              </p>
               <Button
-                size="sm"
-                onClick={() => handleEdit(brand)}
-                className="mt-2"
+                onClick={handleOpenCreateModal}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white gap-2"
               >
-                <Edit2 className="w-4 h-4 mr-1" />
-                Edit
+                <Plus className="w-4 h-4" />
+                Create Your First Brand
               </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {brands.map((brand) => (
+            <Card
+              key={brand.id}
+              className="hover:shadow-lg transition-all border border-gray-200 overflow-hidden group relative"
+            >
+              {/* EDIT BUTTON - TOP RIGHT */}
+              <Button
+                onClick={() => handleEdit(brand)}
+                className="absolute top-2 right-2 z-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 h-9 w-9 shadow-lg"
+                variant="ghost"
+              >
+                <Edit2 className="w-4 h-4" />
+              </Button>
+
+              <CardContent className="p-0">
+                {/* Image Section */}
+                <div className="w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center border-b border-gray-200 overflow-hidden">
+                  <img
+                    src={
+                      brand.brand_logo
+                        ? `${brandImageUrl}${brand.brand_logo}`
+                        : noImageUrl
+                    }
+                    alt={brand.brand_name}
+                    onError={(e) => {
+                      e.target.src = noImageUrl;
+                    }}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+
+                {/* Content Section */}
+                <div className="p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 flex-1">
+                      {brand.brand_name}
+                    </h3>
+                    {brand.brand_status === 1 ? (
+                      <div className="flex items-center gap-0.5 whitespace-nowrap">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span className="text-xs font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">
+                          Active
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-0.5 whitespace-nowrap">
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                        <span className="text-xs font-medium text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full">
+                          Inactive
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* PAGINATION */}
-      <div className="flex justify-center gap-2 mt-6">
-        <Button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft />
-        </Button>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-8">
+          <Button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || pageLoading}
+            variant="outline"
+            className="gap-2"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Previous
+          </Button>
 
-        <span className="px-3 py-2">
-          {currentPage} / {totalPages}
-        </span>
+          <div className="flex items-center gap-2">
+            {Array.from({ length: totalPages }).map((_, i) => {
+              const pageNum = i + 1;
+              const isNearCurrent =
+                pageNum === currentPage || Math.abs(pageNum - currentPage) <= 1;
+              const showEllipsis =
+                i > 0 && pageNum === currentPage - 2 && currentPage > 2;
 
-        <Button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          <ChevronRight />
-        </Button>
-      </div>
+              if (pageNum > totalPages - 2 && currentPage <= totalPages - 3) {
+                if (pageNum === totalPages - 2) {
+                  return (
+                    <span key={`ellipsis-1`} className="text-muted-foreground">
+                      ...
+                    </span>
+                  );
+                }
+              }
+
+              if (isNearCurrent || pageNum === 1 || pageNum === totalPages) {
+                return (
+                  <Button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    disabled={pageLoading}
+                    variant={pageNum === currentPage ? "default" : "outline"}
+                    size="sm"
+                    className={
+                      pageNum === currentPage
+                        ? "bg-blue-600 hover:bg-blue-700"
+                        : ""
+                    }
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              } else if (showEllipsis) {
+                return (
+                  <span key={`ellipsis-${i}`} className="text-muted-foreground">
+                    ...
+                  </span>
+                );
+              }
+              return null;
+            })}
+          </div>
+
+          <Button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages || pageLoading}
+            variant="outline"
+            className="gap-2"
+          >
+            Next
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* PAGE INFO */}
+      {totalPages > 1 && (
+        <div className="text-center text-sm text-muted-foreground">
+          Page {currentPage} of {totalPages}
+        </div>
+      )}
     </div>
   );
 };
