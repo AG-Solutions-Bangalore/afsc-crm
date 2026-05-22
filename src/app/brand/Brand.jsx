@@ -104,13 +104,24 @@ const Brand = () => {
   // =========================
   // PAGE CHANGE
   // =========================
+  // const handlePageChange = (newPage) => {
+  //   if (newPage >= 1 && newPage <= totalPages) {
+  //     fetchBrands(newPage, search);
+  //     window.scrollTo({ top: 0, behavior: "smooth" });
+  //   }
+  // };
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      fetchBrands(newPage, search);
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+  };
+  useEffect(() => {
+    fetchBrands(currentPage, search);
+  }, [currentPage]);
+  useEffect(() => {
+    if (!pageLoading) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  };
-
+  }, [brands]);
   // =========================
   // LOGO
   // =========================
@@ -301,7 +312,7 @@ const Brand = () => {
                 placeholder="Enter brand name"
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
-                disabled
+                disabled={!!editingId}
                 className="border-gray-200"
               />
             </div>

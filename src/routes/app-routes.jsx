@@ -8,22 +8,7 @@ import { Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import AuthRoute from "./auth-route";
 import ProtectedRoute from "./protected-route";
-import NotificationList from "@/app/notification/notification-list";
-import EmployeeList from "@/app/employee/employee-list";
-import CreateEmployee from "@/app/employee/create-employee";
-import EditEmployee from "@/app/employee/edit-employee";
 import Dashboard from "@/app/dashboard/dashboard";
-import SiteList from "@/app/site/site-list";
-import TripList from "@/app/trip/trip-list";
-import CreateTrip from "@/app/trip/create-trip";
-import EditTrip from "@/app/trip/edit-trip";
-import KMReadingList from "@/app/km-reading/km-reading-list";
-import EmployeeReport from "@/app/report/employee.jsx";
-import SiteReport from "@/app/report/site.jsx";
-import KMReadingReport from "@/app/report/km-reading.jsx";
-import TripReport from "@/app/report/Petrol-Reimbursement.jsx";
-import PetrolReimbursementDetail from "@/app/report/Petrol-Reimbursement-Detail.jsx";
-import PlaceReport from "@/app/report/place";
 import Brand from "@/app/brand/Brand";
 import Client from "@/app/client/Client";
 import Product from "@/app/product/Product";
@@ -78,47 +63,24 @@ function AppRoutes() {
               </Suspense>
             }
           />
-          <Route
+          {/* <Route
             path="/notification"
             element={
               <Suspense fallback={<LoadingBar />}>
                 <NotificationList />
               </Suspense>
             }
-          />
-          <Route
-            path="/employee"
-            element={
-              <Suspense fallback={<LoadingBar />}>
-                <EmployeeList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/create-employee"
-            element={
-              <Suspense fallback={<LoadingBar />}>
-                <CreateEmployee />
-              </Suspense>
-            }
-          />
-          <Route
-            path="/edit-employee/:id"
-            element={
-              <Suspense fallback={<LoadingBar />}>
-                <EditEmployee />
-              </Suspense>
-            }
-          />
-          <Route
+          /> */}
+
+          {/* <Route
             path="/site"
             element={
               <Suspense fallback={<LoadingBar />}>
                 <SiteList />
               </Suspense>
             }
-          />
-          <Route
+          /> */}
+          {/* <Route
             path="/trip"
             element={
               <Suspense fallback={<LoadingBar />}>
@@ -141,9 +103,9 @@ function AppRoutes() {
                 <EditTrip />
               </Suspense>
             }
-          />
+          /> */}
 
-          <Route
+          {/* <Route
             path="/report/employee"
             element={
               <Suspense fallback={<LoadingBar />}>
@@ -191,16 +153,16 @@ function AppRoutes() {
                 <PlaceReport />
               </Suspense>
             }
-          />
+          /> */}
 
-          <Route
+          {/* <Route
             path="/km-reading"
             element={
               <Suspense fallback={<LoadingBar />}>
                 <KMReadingList />
               </Suspense>
             }
-          />
+          /> */}
         </Route>
 
         <Route path="*" element={<NotFound />} />
