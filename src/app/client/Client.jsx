@@ -28,9 +28,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import LoadingBar from "@/components/loader/loading-bar";
-import LoadingBars from "@/components/Loaders/LoadingBar";
-
+import LoadingBars from "@/components/loader/loading-bar";
 const Client = () => {
   const [clients, setClients] = useState([]);
   const [clientName, setClientName] = useState("");
@@ -40,7 +38,6 @@ const Client = () => {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
-
   // Pagination & Image URLs
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -48,10 +45,6 @@ const Client = () => {
   const [clientImageUrl, setClientImageUrl] = useState("");
   const [noImageUrl, setNoImageUrl] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-
-  // =========================
-  // FETCH BRANDS
-  // =========================
   const fetchClients = async (page = 1, search = "") => {
     try {
       setPageLoading(true);
@@ -59,24 +52,19 @@ const Client = () => {
         `/client?page=${page}&search=${search}`,
       );
       const responseData = response.data.data;
-
       setClients(responseData.data);
       setCurrentPage(responseData.current_page);
       setTotalPages(responseData.last_page);
-
-      // Extract image URLs
       if (response.data.image_url) {
         const clientUrl = response.data.image_url.find(
           (img) => img.image_for === "Client",
         )?.image_url;
-        const noImage = response.data.image_url.find(
+        const noImg = response.data.image_url.find(
           (img) => img.image_for === "No Image",
         )?.image_url;
-
         if (clientUrl) setClientImageUrl(clientUrl);
-        if (noImage) setNoImageUrl(noImage);
+        if (noImg) setNoImageUrl(noImg);
       }
-      setPageLoading(false);
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch clients");
@@ -84,78 +72,67 @@ const Client = () => {
       setPageLoading(false);
     }
   };
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      fetchClients(1, searchTerm);
+    }, 500);
 
+    return () => clearTimeout(delay);
+  }, [searchTerm]);
   useEffect(() => {
     fetchClients(1, "");
   }, []);
+  // const handlePageChange = (newPage) => {
+  //   if (newPage >= 1 && newPage <= totalPages) {
 
-  // =========================
-  // HANDLE PAGE CHANGE
-  // =========================
+  //   }
+  // };
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      fetchClients(newPage, searchTerm);
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+  };
+  useEffect(() => {
+    fetchClients(currentPage, searchTerm);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentPage]);
+  useEffect(() => {
+    if (!pageLoading) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  };
-
-  // =========================
-  // HANDLE LOGO CHANGE
-  // =========================
+  }, [clients]);
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setClientImage(file);
-      // Create preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result);
-      };
+      reader.onloadend = () => setLogoPreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
-
-  // =========================
-  // CREATE / UPDATE
-  // =========================
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!clientName.trim()) {
       toast.error("Client name is required");
       return;
     }
-
     try {
       setLoading(true);
-
       const formData = new FormData();
       formData.append("client_name", clientName);
       formData.append("client_status", String(clientStatus));
-
-      if (clientImage) {
-        formData.append("client_image", clientImage);
-      }
-
+      if (clientImage) formData.append("client_image", clientImage);
       if (editingId) {
         formData.append("_method", "PUT");
         await apiClient.post(`/client/${editingId}`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-
         toast.success("Client updated successfully");
       } else {
         await apiClient.post("/client", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         });
-
         toast.success("Client created successfully");
       }
-
       resetForm();
       setIsModalOpen(false);
       fetchClients(currentPage, searchTerm);
@@ -166,99 +143,85 @@ const Client = () => {
       setLoading(false);
     }
   };
-
-  // =========================
-  // RESET FORM
-  // =========================
   const resetForm = () => {
     setClientName("");
     setClientImage(null);
-    setClientStatus("1"); // Always reset to string "1"
+    setClientStatus("1");
     setEditingId(null);
-    setLogoPreview(null); // Clear any existing preview
+    setLogoPreview(null);
   };
-
-  // =========================
-  // OPEN MODAL FOR EDIT
-  // =========================
   const handleEdit = (client) => {
     setClientName(client.client_name);
-    // Ensure status is always a string (API might return number)
     setClientStatus(String(client.client_status));
     setEditingId(client.id);
-    // Set image preview for edit mode
     if (client.client_image) {
       setLogoPreview(`${clientImageUrl}${client.client_image}`);
     } else {
-      // Clear preview if no image exists
       setLogoPreview(null);
     }
     setIsModalOpen(true);
   };
-
-  // =========================
-  // OPEN MODAL FOR CREATE
-  // =========================
   const handleOpenCreateModal = () => {
     resetForm();
     setIsModalOpen(true);
   };
-
-  // =========================
-  // CLOSE MODAL
-  // =========================
   const handleCloseModal = () => {
     if (!loading) {
       resetForm();
       setIsModalOpen(false);
     }
   };
+  // ---------- Update client status via dropdown ----------
+  // const updateClientStatus = async (client, newStatus) => {
+  //   try {
+  //     const fd = new FormData();
+  //     fd.append("client_status", newStatus);
+  //     // Use full external URL as requested
+  //     await apiClient.patch(`/client/${client.id}/status`, fd, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //     });
+  //     toast.success("Status updated");
+  //     fetchClients(currentPage, searchTerm);
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error("Failed to update status");
+  //   }
+  // };
+  const updateClientStatus = async (client, newStatus) => {
+    const updatedClients = clients.map((c) =>
+      c.id === client.id ? { ...c, client_status: newStatus } : c,
+    );
 
-  // =========================
-  // CHANGE STATUS
-  // =========================
-  const handleStatusChange = async (client) => {
+    setClients(updatedClients); // instant UI change
+
     try {
-      const formData = new FormData();
-      // Ensure we're comparing and setting as strings
-      const newStatus = String(client.client_status) === "1" ? "0" : "1";
-      formData.append("client_status", newStatus);
+      const fd = new FormData();
+      fd.append("client_status", newStatus);
 
-      await apiClient.patch(`/clients/${client.id}/status`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      await apiClient.patch(`/clients/${client.id}/status`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.success("Status updated");
-      fetchClients(currentPage, searchTerm);
     } catch (error) {
-      console.error(error);
       toast.error("Failed to update status");
+      fetchClients(currentPage, searchTerm); // rollback sync
     }
   };
-
-  // =========================
-  // SEARCH EFFECT (DEBOUNCE)
-  // =========================
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchClients(1, searchTerm);
-    }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
-
+  // Debounce search
+  // useEffect(() => {
+  //   const timer = setTimeout(() => fetchClients(1, searchTerm), 300);
+  //   return () => clearTimeout(timer);
+  // }, [searchTerm]);
   return (
     <div className="p-6 space-y-6">
-      {/* HEADER */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="w-1/2">
-          <h1 className="text-3xl font-bold tracking-tight ">Clients</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
           <p className="text-muted-foreground mt-1">Manage all your clients</p>
         </div>
-        {/* SEARCH BAR */}
-        <div className="flex w-full lg:w-full items-center gap-2  ml-20">
+        <div className="flex w-full lg:w-full items-center gap-2 ml-20">
           <Input
             type="text"
             placeholder="Search clients ..."
@@ -284,8 +247,7 @@ const Client = () => {
           Create Client
         </Button>
       </div>
-
-      {/* MODAL DIALOG */}
+      {/* Modal */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -298,9 +260,8 @@ const Client = () => {
                 : "Fill in the details to create a new client"}
             </DialogDescription>
           </DialogHeader>
-
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* CLIENT NAME */}
+            {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="clientName" className="text-sm font-medium">
                 Client Name <span className="text-red-500">*</span>
@@ -314,8 +275,7 @@ const Client = () => {
                 className="border-gray-200"
               />
             </div>
-
-            {/* CLIENT IMAGE */}
+            {/* Image */}
             <div className="space-y-2">
               <Label htmlFor="clientImage" className="text-sm font-medium">
                 Client Image
@@ -336,7 +296,6 @@ const Client = () => {
                       alt="Logo preview"
                       className="w-24 h-24 object-contain"
                       onError={(e) => {
-                        // Fallback if preview URL fails to load
                         e.target.src = noImageUrl || "";
                       }}
                     />
@@ -369,8 +328,7 @@ const Client = () => {
                 )}
               </div>
             </div>
-
-            {/* CLIENT STATUS */}
+            {/* Status */}
             <div className="space-y-2">
               <Label htmlFor="clientStatus" className="text-sm font-medium">
                 Status <span className="text-red-500">*</span>
@@ -378,8 +336,9 @@ const Client = () => {
               <Select
                 value={String(clientStatus)}
                 onValueChange={setClientStatus}
+                disabled={loading}
               >
-                <SelectTrigger id="clientStatus" disabled={loading}>
+                <SelectTrigger id="clientStatus">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -398,8 +357,6 @@ const Client = () => {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* SUBMIT BUTTON */}
             <Button
               type="submit"
               disabled={loading}
@@ -415,25 +372,20 @@ const Client = () => {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* CLIENTS GRID */}
+      {/* Grid */}
       {pageLoading ? (
         <LoadingBars />
       ) : clients.length === 0 ? (
         <Card className="border border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">
-                No clients created yet
-              </p>
-              <Button
-                onClick={handleOpenCreateModal}
-                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Create Your First Client
-              </Button>
-            </div>
+            <p className="text-muted-foreground mb-4">No clients created yet</p>
+            <Button
+              onClick={handleOpenCreateModal}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Create Your First Client
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -441,9 +393,12 @@ const Client = () => {
           {clients.map((client) => (
             <Card
               key={client.id}
-              className="hover:shadow-lg transition-all border border-gray-200 overflow-hidden group relative"
+              className={`hover:shadow-lg transition-all overflow-hidden group relative ${
+                String(client.client_status) === "0"
+                  ? "bg-gray-100 border-gray-300 opacity-70"
+                  : "bg-white border-gray-200"
+              }`}
             >
-              {/* EDIT BUTTON - TOP RIGHT */}
               <Button
                 onClick={() => handleEdit(client)}
                 className="absolute top-2 right-2 z-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 h-9 w-9 shadow-lg"
@@ -451,9 +406,7 @@ const Client = () => {
               >
                 <Edit2 className="w-4 h-4" />
               </Button>
-
               <CardContent className="p-0">
-                {/* Image Section */}
                 <div className="w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center border-b border-gray-200 overflow-hidden">
                   {client.client_image ? (
                     <img
@@ -472,28 +425,40 @@ const Client = () => {
                     />
                   )}
                 </div>
-
-                {/* Content Section */}
-                <div className="p-4 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 flex-1">
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
                       {client.client_name}
                     </h3>
-                    {client.client_status === 1 ? (
-                      <div className="flex items-center gap-0.5 whitespace-nowrap">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                        <span className="text-xs font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">
-                          Active
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-0.5 whitespace-nowrap">
-                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                        <span className="text-xs font-medium text-red-700 bg-red-50 px-1.5 py-0.5 rounded-full">
-                          Inactive
-                        </span>
-                      </div>
-                    )}
+                    {/* Status dropdown */}
+                    <Select
+                      value={String(client.client_status)}
+                      onValueChange={async (v) => {
+                        await updateClientStatus(client, v);
+                      }}
+                      disabled={loading}
+                    >
+                      <SelectTrigger
+                        className="w-[120px]"
+                        id={`status-${client.id}`}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            Active
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="0">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-red-600" />
+                            Inactive
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </CardContent>
@@ -501,8 +466,7 @@ const Client = () => {
           ))}
         </div>
       )}
-
-      {/* PAGINATION */}
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-8">
           <Button
@@ -514,26 +478,23 @@ const Client = () => {
             <ChevronLeft className="w-4 h-4" />
             Previous
           </Button>
-
           <div className="flex items-center gap-2">
             {Array.from({ length: totalPages }).map((_, i) => {
               const pageNum = i + 1;
-              const isNearCurrent =
+              const isNear =
                 pageNum === currentPage || Math.abs(pageNum - currentPage) <= 1;
               const showEllipsis =
                 i > 0 && pageNum === currentPage - 2 && currentPage > 2;
-
               if (pageNum > totalPages - 2 && currentPage <= totalPages - 3) {
                 if (pageNum === totalPages - 2) {
                   return (
-                    <span key={`ellipsis-1`} className="text-muted-foreground">
+                    <span key="ellipsis-end" className="text-muted-foreground">
                       ...
                     </span>
                   );
                 }
               }
-
-              if (isNearCurrent || pageNum === 1 || pageNum === totalPages) {
+              if (isNear || pageNum === 1 || pageNum === totalPages) {
                 return (
                   <Button
                     key={pageNum}
@@ -552,7 +513,7 @@ const Client = () => {
                 );
               } else if (showEllipsis) {
                 return (
-                  <span key={`ellipsis-${i}`} className="text-muted-foreground">
+                  <span key="ellipsis-mid" className="text-muted-foreground">
                     ...
                   </span>
                 );
@@ -560,7 +521,6 @@ const Client = () => {
               return null;
             })}
           </div>
-
           <Button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages || pageLoading}
@@ -572,8 +532,6 @@ const Client = () => {
           </Button>
         </div>
       )}
-
-      {/* PAGE INFO */}
       {totalPages > 1 && (
         <div className="text-center text-sm text-muted-foreground">
           Page {currentPage} of {totalPages}
@@ -582,5 +540,4 @@ const Client = () => {
     </div>
   );
 };
-
 export default Client;
