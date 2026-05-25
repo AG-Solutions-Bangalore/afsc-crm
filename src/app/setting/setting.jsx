@@ -28,7 +28,7 @@ const Settings = () => {
                 Theme Color
               </p>
               <div className="flex gap-3 flex-wrap">
-                {["default", "yellow", "green", "purple", "teal", "gray"].map(
+                {["default", "yellow", "green", "purple", "teal", "gray", "black"].map(
                   (color) => {
                     const colorsMap = {
                       default: "bg-slate-900",
@@ -37,6 +37,7 @@ const Settings = () => {
                       purple: "bg-purple-600",
                       teal: "bg-teal-600",
                       gray: "bg-gray-600",
+                      black: "bg-black",
                     };
                     const isActive = theme === color;
                     return (

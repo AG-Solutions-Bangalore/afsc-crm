@@ -5,6 +5,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Toaster } from "react-hot-toast";
 
 import { useNavigate } from "react-router-dom";
 
@@ -38,6 +39,8 @@ export default function Page({ children }) {
 
         <main className="flex flex-1 flex-col gap-4  pt-0 ">
           <div className="min-h-[calc(100vh-8rem)] md:min-h-[100vh] flex-1 rounded-xl p-2">
+            <Toaster position="top-center" />
+
             {children}
           </div>
         </main>

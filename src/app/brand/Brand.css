@@ -1,0 +1,71 @@
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  .brand-page * { font-family: 'Inter', system-ui, sans-serif; }
+  /* ── Shimmer skeleton ── */
+  @keyframes shimmer {
+    0%   { background-position: -700px 0; }
+    100% { background-position:  700px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f5 25%, #e4e4ef 50%, #f0f0f5 75%);
+    background-size: 700px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: 12px;
+  }
+  /* ── Card hover lift ── */
+  .brand-card {
+    transition: transform 0.25s cubic-bezier(.22,1,.36,1),
+                box-shadow 0.25s cubic-bezier(.22,1,.36,1),
+                background 0.3s ease,
+                opacity 0.3s ease;
+  }
+  .brand-card:hover {
+    transform: translateY(-5px) scale(1.015);
+    box-shadow: 0 20px 60px rgba(99,102,241,.18), 0 4px 16px rgba(0,0,0,.06);
+  }
+  /* ── Image zoom ── */
+  .brand-img { transition: transform 0.4s cubic-bezier(.22,1,.36,1), filter 0.3s ease; }
+  .brand-card:hover .brand-img { transform: scale(1.08); }
+  /* ── Inactive card grayscale ── */
+  .brand-card-inactive { background: #f4f5f7 !important; }
+  .brand-card-inactive .brand-img { filter: grayscale(80%) opacity(0.6); }
+  .brand-card-inactive:hover .brand-img { filter: grayscale(40%) opacity(0.8); }
+  /* ── Status select on card ── */
+  .card-status-select [data-radix-select-trigger] { padding: 0 6px; }
+  .status-select-active  { color: #059669; background: #ecfdf5; border-color: #a7f3d0; }
+  .status-select-inactive { color: #dc2626; background: #fef2f2; border-color: #fecaca; }
+  /* ── Gradient text ── */
+  .grad-text {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  /* ── Upload zone pulse ── */
+  @keyframes border-pulse {
+    0%,100% { border-color: #c7d2fe; }
+    50%      { border-color: #818cf8; }
+  }
+  .upload-zone:hover { animation: border-pulse 1.5s ease-in-out infinite; }
+  /* ── Page number active ── */
+  .page-btn-active {
+    background: linear-gradient(135deg,#6366f1,#8b5cf6) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(99,102,241,.4);
+  }
+  /* ── Modal strip gradient ── */
+  .modal-strip {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a78bfa 100%);
+  }
+  /* ── Search focus glow ── */
+  .search-input:focus-within {
+    box-shadow: 0 0 0 3px rgba(99,102,241,.18);
+  }
+  /* ── Fade in ── */
+  @keyframes fadeInUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0);    }
+  }
+  .fade-in { animation: fadeInUp 0.4s ease both; }
+  .fade-in-delay-1 { animation-delay: 0.05s; }
+  .fade-in-delay-2 { animation-delay: 0.10s; }
+  .fade-in-delay-3 { animation-delay: 0.15s; }
