@@ -1,23 +1,43 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-const ThemeContext = createContext();
+const ThemeContext = createContext({
+  theme: "black",
+  setTheme: () => {},
+});
+
+const VALID_THEMES = [
+  "default",
+  "purple",
+  "yellow",
+  "green",
+  "teal",
+  "gray",
+  "black",
+];
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "default");
+  // Get saved theme from localStorage
+  const stored = localStorage.getItem("theme");
+
+  // Default theme = black
+  const initial = VALID_THEMES.includes(stored) ? stored : "black";
+
+  const [theme, setTheme] = useState(initial);
 
   useEffect(() => {
     const root = document.documentElement;
-  
-   
+
+    // Remove all theme classes first
     root.classList.remove(
       "theme-yellow",
       "theme-green",
       "theme-purple",
       "theme-teal",
-      "theme-gray"
+      "theme-gray",
+      "theme-black",
     );
-  
 
+    // Add active theme class
     if (theme === "yellow") {
       root.classList.add("theme-yellow");
     } else if (theme === "green") {
@@ -28,17 +48,35 @@ export const ThemeProvider = ({ children }) => {
       root.classList.add("theme-teal");
     } else if (theme === "gray") {
       root.classList.add("theme-gray");
+    } else if (theme === "black") {
+      root.classList.add("theme-black");
     }
-  
+
+    // Save selected theme
     localStorage.setItem("theme", theme);
   }, [theme]);
-  
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme: theme || "black",
+        setTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
 };
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+
+  if (!context || !context.theme) {
+    return {
+      theme: "black",
+      setTheme: () => {},
+    };
+  }
+
+  return context;
+};

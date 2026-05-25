@@ -62,7 +62,8 @@ export default function BrandPanel() {
             </span>
           </h2>
           <p className="text-blue-100/70 mt-4 max-w-md leading-relaxed text-sm">
-           Personalized service during every step of the project. We design, install, maintain and service your every operational need.
+            Personalized service during every step of the project. We design,
+            install, maintain and service your every operational need.
           </p>
         </motion.div>
 
@@ -96,10 +97,7 @@ export default function BrandPanel() {
           className="pt-6 border-t border-white/10 mt-8 md:mt-10 flex items-center justify-between"
         >
           <div className="flex flex-col">
-            <span className="text-2xl font-bold text-white">3CBS</span>
-            <span className="text-[10px] text-blue-100/40 uppercase tracking-[0.2em]">
-              Collective Excellence
-            </span>
+            <span className="text-2xl font-bold text-white">AFSC</span>
           </div>
           <div className="text-right">
             <p className="text-xs text-blue-100/60 leading-tight">
